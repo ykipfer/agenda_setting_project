@@ -1,0 +1,723 @@
+---
+title: ""
+author: ""
+date: ""
+output:
+  pdf_document:
+    toc: yes
+editor_options:
+  chunk_output_type: console
+urlcolor: blue
+fontsize: 12pt
+linestretch: 1.5
+---
+
+```{r knitr_init, echo=FALSE, cache=FALSE, warning=FALSE, message=FALSE, results=FALSE}
+# Load all needed packages
+packages <- c("knitr","rtweet","yaml","dplyr","httr","rvest","kableExtra","png","tidyr","ggplot2","gridExtra","readtext","quanteda","stm","tidyverse","splitstackshape","geometry","Rtsne","rsvd")
+
+lapply(packages,require,character.only = TRUE)
+
+## Global options
+options(max.print="150", stringsAsFactors = F)
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+knitr::opts_chunk$set(fig.height = 5, fig.width =7 )
+rm(list = ls())
+```
+
+# Introduction
+The COVID-19 Pandemic has firmly grasped the global infosphere. Reports about the virus are mass-produced by media the world over. Newstickers are constantly pushing new articles reporting on the virus onto our mobile devices, and we are confronted with updated statistics on the newly infected population, the death toll, as well as countless articles on the economic, political and personal effects the virus is having on our lives on a daily basis.
+
+As such, it is not astounding that the public’s interest in COVID-19 has also tremendously increased. A mere look at the number of Google searches concerned with the coronavirus show that it has become an even greater concern in our everyday lives than the daily weather report (Figure 1).
+
+![Coronavirus and weather search trends over time](weather_corona.png)
+
+Given the vast and diverse array of information on the virus that is provided to the public by an equally vast assortment of media sources, one has to ask if and how news reports are shaping our opinions and comprehension of the virus and its consequences. Is the constant barrage of information, and the focus on certain aspects, such as the daily number of newly infected, the number of deaths per day or the rising number of unemployed causing consumers of these articles, to also perceive these aspects as the most salient issues? Do articles that downplay the threat of the virus, also lead to people being less willing to follow the government’s advice aimed at preventing the further spread of the virus? Finally, how does the media, thereby, influence the public discussion on the virus?
+
+A prominent example of how the media might be shaping their consumer’s opinions is Fox News’ initial downplaying of the threat of the coronavirus, at the start of the epidemic in the United States (Smith, 2020). According to a study, conducted by the Pew Research Center, on how Americans perceive the corona outbreak depending on their main news source, Fox News viewers were more likely to believe that the media exaggerated the threat of the virus (Jurkowitz & Mitchell, 2020). Thus, if people are less willing to believe that the virus poses a serious risk to themselves and society as a whole, the media’s influence could counteract the measures of health services and the government to halt and contain the spread of the virus. It is, therefore, paramount that public health officials understand and monitor the influence the media might have on their constituents, to be able to direct information campaigns to target individuals susceptible to such influence and prevent further misinformation and, thereby, create a more successful containment strategy. 
+
+To add to the understanding of how the media might influence the public, this paper will try to answer the research question on how the media uses their agenda-setting power to influence the public discussion on COVID-19. In particular, the paper will focus on first-level agenda-setting effects and try to find evidence on how media coverage on the COVID-19 pandemic and the subsequent lockdown, influenced the public discussion.
+
+**RQ: Did news coverage of the COVID-19 pandemic have an influence on the topic salience in the public discussion?**
+
+In the following sections, an overview of the pertinent literature on the agenda-setting effect of the media will be provided, to subsequently formulate the hypotheses and discuss the data the study plans to collect and use, as well as the methodology and results. Lastly, we conclude on the findings and discuss the limitations of the study.
+
+# Literature Review
+The agenda-setting effect of the media can be categorized into two levels of agenda-setting. The first level of agenda-setting can be defined as “the ability of the mass media to tell the public what to think about rather than what to think” (Weaver, 2015).
+
+According to the agenda-setting literature, the mass media’s influence on the public discussion is an unintended consequence, caused by the media’s ability to only cover a certain amount of topics at any given time (M. E. McCombs & Guo, 2014). The media is constantly faced with a variety of different topics competing for attention; however, only a limited amount of topics can be aired at any given time. Thus, the media will only choose to cover the topics it deems most interesting for the public, which in turn will lead these topics to be perceived by the public as the most important issues of the day (M. E. McCombs & Guo, 2014).
+
+The first level agenda-setting effect was first explored by McCombs & Shaw (1972) in their study on the 1968 US presidential election. The authors looked at whether issues that featured prominently in news articles were also perceived to be the most salient issues by the public. The authors found a significant correlation between prominently featured issues in the news and the public’s issue ranking, indicating that news reports indeed seemed to influence the public’s perception of the importance of issues. Following McCombs & Shaw's (1972) study, subsequent papers found further evidence of the media’s first-level agenda-setting effect (Tan & Weaver, 2009; King et al., 2017; Kowalewski & McCombs, 2019).
+
+While the first level of agenda-setting addresses the media’s influence over the salience of issues or objects in the public agenda, the second level of agenda-setting concerns itself with the media’s influence over the salience of the attributes of these objects or issues. In specific, second-level agenda-setting investigates how the media’s framing and contextualization of certain issues, leads to an agenda of attributes, which tells the public which attributes they should focus on when thinking or talking about the issue  (Wirth et al., 2010; M. E. McCombs et al., 2014; Weaver, 2015). Thus, when the media reports on the passing of a new policy or candidates in an election, it might choose to highlight certain aspects of the policy (e.g. economic consequences) or characteristics of the candidates (e.g. their appearance) more than others, which indicates to viewers that these properties are of particular importance. The literature identifies two dimensions, through which second-level agenda-setting effects are transmitted: The affective and the subjective or cognitive dimension (McCombes et al., 2000; Wirth et al., 2010). The cognitive dimension captures the description of the object or issue, while the affective dimension captures the sentiment of the description (e.g. positive, negative or neutral descriptions by articles). Thereby, media consumers are influenced by both, the descriptions of the attributes, which informs them about which attributes they should consider as important, as well as the sentiment delivered with those descriptions, which tell them how they should think about these attributes.
+
+In a study on the second-level agenda-setting effect of the media in the 1995 regional and municipal elections in Spain,  M. McCombs et al. (1997) found that voters seemed to incorporate the images of the political candidates offered by the media outlets as their own. The study looked at the media’s portrayal of substantive attributes and affective attributes of candidates (M. McCombs et al., 1997). While they found significant effects for both kinds of attributes, the strongest correspondence between the voter’s image and the media’s image of the candidates was found for the affective dimension. Therefore, voters in the study strongly mirrored the media’s affective description of a candidate, which seems to indicate that the sentiment of an article has a stronger influence on second-level agenda setting (M. McCombs et al., 1997). The stronger influence of the affective dimension was further evidenced in Coleman & Wu's (2010) study. In their study, the authors looked at whether the media’s portrayal of the candidates had an impact on the audiences emotions about a candidate. Equal to M. McCombs et al. (1997), the authors also find that the media’s agenda-setting effects have a stronger influence on the news consumers’ emotions (affective dimension) than on their cognitive assessments of a topic. Furthermore, the study finds that negative emotions have a greater impact than positive emotions (Coleman & Wu, 2010). The greater effect of negative news was also found to be present in news coverage of topics, other than candidates and elections (e.g. economic news or the perception of foreign nations) (Hester & Gibson, 2003; Wanta et al., 2004). Thus, evidence suggest that negative coverage of a topic has a greater chance of transferring the media’s attribute agendas to the audience (Bowe et al., 2013).
+
+In summary, the media is not only able to tell us which topics are important (first-level agenda-setting) but is also able to tell us how to think about a given topic (second-level agenda-setting). Through second-level agenda-setting, the media is able to influence the consumers’ opinion about a topic in two ways. Firstly, by frequently reporting on certain attributes of an issue, the media can imprint onto the consumer, that these attributes of the topic are the most important (cognitive dimension). Secondly, through the tonality in its reporting (affective dimension), the media can tell the consumer how he/she should think about the issue, whereby, negative news reports are more effective at transferring the media’s attribute agenda to the consumer.
+
+# Hypotheses
+The research question this study is trying to answer is whether news coverage of the COVID-19 pandemic influenced the public discussion. The main focus of the study will be laid on exploring the first-level agenda-setting influence of Swiss media outlets. Thus, I will look at whether those topics that experienced an exceptional amount of interest by the media, were perceived as the most salient topics by the public. As such, the hypothesis is as follows:
+
+**Hypothesis: The more a news agency reported on a topic, the more people tweet about the given topic.**
+
+Following I will give an overview of the data I collected to conduct the study, as well as the methodology I used to test the hypothesis.
+
+```{r eval=FALSE}
+## authenticate via access token
+twitter_KEY <- yaml.load_file("/Users/ykipfer/Documents/api_keys/twitter.yml")
+token <- create_token(app = twitter_KEY[[1]],
+consumer_key = twitter_KEY[[2]],
+consumer_secret = twitter_KEY[[3]],
+access_token = twitter_KEY[[4]],
+access_secret = twitter_KEY[[5]])
+
+# Get corona tweets in switzerland, by geolocation
+corona_tweets_ch <- search_tweets("corona OR COVID OR #COVID19 OR #CoronaInfoCH OR #coronavirus OR #Coronakrise OR Lockerung OR #Lockdown OR Exit", include_rts = F, n = 100000 ,geocode = "46.630723,8.238812,178km", retryonratelimit = TRUE)
+
+# Save data over 6 weeks
+save(corona_tweets_ch,file="tweets_week6_ch.RData")
+
+# Load data
+for (i in 1:6) {
+  load(paste0("tweets_week", i, "_ch.RData"))
+}
+
+# join
+data_tweets <- rbind(df1,df2,df3,df4,df5,df6)
+
+#Save merged data
+save(data_tweets, file = "merged_data.RData")
+```
+
+# Research Design
+
+## Data
+
+
+```{r}
+# Look for most influencial media sources on twitter based on number of links
+load("merged_data.RData")
+
+# shorten link to only see the source of the link
+data_tweets$urls_url <- gsub("\\/.*", data_tweets$urls_url, replacement = "")
+
+# Count number of links per source
+link_count <- data_tweets %>%
+  group_by(urls_url) %>% 
+  count() %>%
+  filter(urls_url %in% c("nzz.ch", "tagesanzeiger.ch", "srf.ch", "blick.ch")) %>% 
+  na.omit() %>% 
+  arrange(desc(n)) %>% 
+  rename(Source = urls_url,
+         Cited = n)
+```
+
+
+```{r eval=FALSE}
+# Filter for the three most influential swiss newspapers
+df_ch <- data_tweets %>% 
+  filter(urls_url %in% c("blick.ch","srf.ch","tagesanzeiger.ch"))
+
+# Filter for links by article
+  #Blick
+links_blick <- df_ch %>% 
+  filter(urls_url == "blick.ch") %>% 
+  select(urls_expanded_url) %>% 
+  unlist() %>% 
+  unique()
+
+  #Tagesanzeiger
+links_tagi <- df_ch %>% 
+  filter(urls_url == "tagesanzeiger.ch") %>% 
+  select(urls_expanded_url) %>% 
+  unlist() %>% 
+  unique()
+
+  #SRF
+links_srf <- df_ch %>% 
+  filter(urls_url == "srf.ch") %>% 
+  select(urls_expanded_url) %>% 
+  unlist() %>% 
+  unique()
+  
+# Create a scraping function
+scrape_function <- function(urls,headline_selector,article_selector,date_selector){
+  
+  headline <- articles <- status <-   ""
+  
+  for (i in 1:length(urls)) {
+  # Check if links are still working
+  r = GET(urls[i])
+  status = status_code(r)
+  
+  if(status == 200){
+      
+      page <- read_html(urls[i])
+      
+      headline[i] <- page %>% 
+      html_node(headline_selector) %>% 
+      html_text(trim = TRUE)
+      
+      articles[i] <-page %>% 
+      html_nodes(article_selector) %>%
+        html_text(trim = TRUE) %>% 
+        paste(collapse = "")
+      
+    
+      }
+  
+  else{
+    
+    next #jump to next iteration if link does not work
+    
+    }
+  }
+  
+   # merge everything together
+  data <- as.data.frame(cbind(headline = headline, article = articles, link = urls))
+  
+  # remove all instance without article entry
+  data <- data %>% 
+    filter(article != is.na(article))
+  
+}
+
+# Scrape Blick article
+headline_blick <- ".title.title--resized--medium"
+
+article_blick <- ".article-body.readmore"
+
+blick <- scrape_function(links_blick, headline_blick, article_blick, blick)
+
+# scrape date
+blick_date_selector <- "#content > div > main > div.vertical-container.vertical-container--type-document > div.layout-multi-line.layout-multi-line--type-article > div.layout-item.layout-item--flex-desktop-4.layout-item--flex-tablet-6.layout-item--flex-mobile-6 > article > div:nth-child(2) > header > div.header__article-last-updated-wrapper > div:nth-child(2)"
+
+date_blick <-  ""
+
+for (i in 1:length(blick$link)) {
+      
+      page <- read_html(blick$link[i])
+      
+      date_blick[i] <- page %>% 
+      html_node(blick_date_selector) %>% 
+      html_text(trim = TRUE) 
+}
+
+# change into date format and merge
+date_blick <- gsub("\\,.*", date_blick, replacement = "")
+
+blick$date <- as.Date(date_blick, format = "%d.%m.%Y")
+
+# Save data
+save(blick, file = "blick.RData")
+
+# Scrape tagi articles
+headline_tagi <- "#main > article > div.content-head > h1 > span.ContentHead_text__NId_w"
+
+article_tagi <- ".article-paragraph"
+
+tagi <- scrape_function(links_tagi, headline_tagi, article_tagi, tagi)
+
+# scrape date
+date_tagi <-  ""
+
+tagi_date_selector <- "#main > article > div.content-head > div > div.contenttext > time"
+
+for (i in 1:length(tagi$link)) {
+      
+      page <- read_html(tagi$link[i])
+      
+      date_tagi[i] <- page %>% 
+        html_node(tagi_date_selector) %>%
+        html_attr(name = "datetime")
+}
+
+
+tagi$date <- as.Date(date_tagi)
+
+save(tagi, file = "tagi.RData")
+
+# Scrape Srf articles
+headline_srf <- "body > main > article > header > h1 > span.article-title__text"
+
+article_srf <- "body > main > article > div.article-content > p"
+
+srf <- scrape_function(links_srf, headline_srf, article_srf, srf)
+
+# scrape date
+srf_date_selector <- ".article-reference"
+
+date_srf <-  ""
+
+for (i in 1:length(srf$link)) {
+      
+      page <- read_html(srf$link[i])
+      
+      date_srf[i] <- page %>% 
+      html_node(srf_date_selector) %>% 
+      html_text(trim = TRUE) 
+}
+
+# change into date format and merge
+date_srf1 <- str_extract(date_srf,"([0-3]?\\d\\.{1})([01]?\\d\\.{1})([12]{1}\\d{3}\\.?)")
+
+srf$date <- as.Date(date_srf1, format = "%d.%m.%Y")
+
+save(srf, file = "srf.RData")
+```
+
+
+To conduct the study, two types of data were used, tweets and newspaper articles. 
+Firstly, I collected tweets from people living in Switzerland, through the [Twitter Application Programming Interface (API)](https://developer.twitter.com/en) over a period of 6 weeks. From the 27th of April till the 3rd of June, I collected over 136'500 tweets reporting on the COVID-19 crisis. Since I chose to collect the tweets through geolocation, many of the tweets originated from nearby border countries, such as Germany, Italy and Austria. To make sure that only Swiss twitter users were included in the sample, I filtered the data by country code attributes. Additionally, I only included German-speaking twitter users, since I only looked at Swiss-German news agencies. In total, after filtering, only 1585 observations remained in the sample.
+
+
+Secondly, I chose the most influential news agencies, based on the total number of articles cited in tweets. Table 1 shows the four most-cited newspapers. While the *Neue Zürcher Zeitung* (NZZ) was cited the most, I chose not to include NZZ articles in the final analysis. The reason for this choice is due to the NZZ restricting access to their articles by a pay-wall. Thus, I focused on using articles from *SRF*, *Tagesanzeiger* and *Blick*.
+I used the links found within tweets, which pointed to articles from the aforementioned news agencies, to scrape the articles from the individual websites and, thereby,  I managed to scrape 286 *Blick* articles, 613 *SRF* articles and 528 *Tagesanzeiger* articles.
+
+
+```{r}
+kable(link_count, format = "latex", booktabs = TRUE, caption = "Most influencial swiss newspapers on Twitter") %>% 
+  kable_styling(latex_options = c("hold_position"), font_size = 12)
+```
+
+
+## Methodology
+
+
+```{r eval=FALSE}
+set.seed(1234)
+
+# create corpus
+srf_corpus_words <- corpus(srf, text_field = "article")
+
+blick_corpus_words <- corpus(blick, text_field = "article")
+
+tagi_corpus_words <- corpus(tagi, text_field = "article")
+
+
+# Topic Model
+topic_model_function <- function(corpus) {
+# tokenize the text and remove puncuation, symbols etc
+toks <- tokens(corpus, remove_punct = TRUE, remove_symbols = TRUE, split_hyphens = TRUE, remove_numbers = TRUE)
+
+# create document feature matrix, remove stopwords and additional words, filter out features with a term frequency below 10 and a document frequency below 5
+dfm <- dfm(toks) %>%
+  dfm_remove(c(stopwords("de"), c("dass", "zb","müssen","sagt*","bereits","wurde"))) %>%
+  dfm_trim(min_termfreq = 10) %>%
+  dfm_trim(min_docfreq = 5)
+
+# remove empty documents
+empty <- which(rowSums(dfm) == 0)
+dfm <- dfm[-empty, ]
+
+}
+
+blick_dfm <- topic_model_function(blick_corpus_words)
+
+srf_dfm <- topic_model_function(srf_corpus_words)
+
+tagi_dfm <- topic_model_function(tagi_corpus_words)
+
+# convert into stm
+out_blick <- convert(blick_dfm, "stm")
+
+out_srf <- convert(srf_dfm, "stm")
+
+out_tagi <- convert(tagi_dfm, "stm")
+
+
+# Search for optimal number of topics
+stm_search_blick <- searchK(out_blick$documents, out_blick$vocab, K = seq(5, 30, by = 1), max.em.its = 75)
+
+stm_search_srf <- searchK(out_srf$documents, out_srf$vocab, K = seq(5, 30, by = 1), max.em.its = 75)
+
+stm_search_tagi <- searchK(out_tagi$documents, out_tagi$vocab, K = seq(5, 30, by = 1), max.em.its = 75)
+
+# plot results
+png(file="searchk_blick.png",
+width=600, height=350)
+searchk_blick <- plot(stm_search_blick) + title("Blick") # k=15
+dev.off()
+
+png(file="searchk_srf.png",
+width=600, height=350)
+searchk_srf <- plot(stm_search_srf) + title("SRF") #k=20
+dev.off()
+
+png(file="searchk_tagi.png",
+width=600, height=350)
+searchk_tagi <- plot(stm_search_tagi) + title("Tagesanzeiger") # k=22
+dev.off()
+
+# calculate topic model with optimal number of topics
+stm_blick <- stm(out_blick$documents, out_blick$vocab, K = 15)
+
+stm_srf <- stm(out_srf$documents, out_srf$vocab, K = 20)
+
+stm_tagi <- stm(out_tagi$documents, out_tagi$vocab, K = 22)
+
+# Plot showing most common topics
+png(file="blick_stm_plot.png",
+width=600, height=350)
+blick_stm_plot <- plot.STM(stm_blick, n = 30, topics =c(1:12), type = "summary", main = "Blick Topics")
+dev.off()
+
+png(file="srf_stm_plot.png",
+width=600, height=350)
+srf_stm_plot <- plot.STM(stm_srf, n = 30, topics =c(1:12), type = "summary", main = "SRF Topics")
+dev.off()
+
+png(file="tagi_stm_plot.png",
+width=600, height=350)
+tagi_stm_plot <- plot.STM(stm_tagi, n = 30, topics =c(1:12), type = "summary", main = "Tagesanzeiger Topics")
+dev.off()
+```
+
+
+I employed a two-step approach to analyse how the news articles influenced the public discussion.
+First, I used topic modeling to extract the main topics the news agencies addressed within their articles, during the observed period.
+As such, I created a corpus containing all the articles for each of the three news sources. I then transformed the corpora into document-feature-matrices, in which I removed German stopwords, as well as other frequently used words that do not contribute much to the meaning of the topics. To create more precise distinctions between the topics, I only included terms which appear at least ten times or more, in five or more documents, and I removed any empty documents.
+Before creating the final structural topic models, I first needed to find the optimal number of topics to be calculated by the model. I ran the model for various numbers of topics and plotted the diagnostic values of the models (see Appendix).
+
+In order to find the optimal amount of topics, I looked at the held-out likelihood, residuals and semantic coherence
+values. On the one hand, we want the held-out likelihood to be high and the residuals to be low. On the other hand, we also want a high semantic coherence, since this means that the most probable words in a given topic frequently co-occur together, thus, making the interpretation of the topics easier. Table 2 shows the resulting optimal number of topics, given the model diagnostics.
+
+
+```{r}
+# table with optimal number of topics per model
+Model <- c("Blick","SRF","Tagesanzeiger")
+k <- c(15,20,22)
+table <- cbind(Model,k)
+
+kable(table, format = "latex", booktabs = TRUE, caption = "Optimal Number of Topics for Topic Model") %>% 
+  kable_styling(latex_options = "hold_position")
+```
+
+
+Finally, implementing the optimal number of topics, I calculate the final structural topic models for the three news agencies (see Appendix).
+
+As already stated previously in the literature review, the media can influence the public's perception of a topic's saliency, through frequent reporting on the topic. As such, the aim is to explore whether topics that were frequently addressed by the media, also experienced higher levels of discussion on Twitter. Thus, I chose to concentrate on the top topic for each of the news agencies. 
+
+Table 3, shows the top topics, as well as the words that the structural topic models contributed to these topics, for each of the news agencies. The topic-associated words were then used to create a dictionary, which allowed me to track the development of these topics within the tweets and articles throughout the six week time period. Using the trend distribution of the topics, we are able to tell whether previous peaks in reporting on a topic, are followed by peaks in the public's discussion of the topic.
+
+
+```{r}
+# table with topics and associated words
+Media <- c("Blick","SRF","Tagesanzeiger")
+Topic <- c("Masks & Measures","Economic Impact","Contact Tracing and Infection Progression")
+Words <- c("kunden, sbb, masken, maskenpflicht, massnahmen, tragen, schutzkonzept, gäste, passagiere, restaurants","wirtschaft, geld, krise, kurzarbeit, firmen, unternehmen, co2, wachstum, branchen","lockdown, pandemie, tracing, app, krise, quarantäne, regierung, bevölkerung, kontakt")
+table_topic <- cbind(Media, Topic, Words)
+
+kable(table_topic, format = "latex", booktabs = TRUE, caption = "Top Topics and Associated Words") %>% 
+  kable_styling(latex_options = c("scale_down", "hold_position"))
+```
+
+
+# Results
+
+```{r eval=FALSE}
+# Topics in Tweets over time
+#Filter for german and swiss tweets
+data <- data_tweets %>% 
+  filter(lang == "de",
+         country_code == "CH") %>% 
+  mutate(date = as.Date(created_at))
+
+# Corpus bauen
+tweet_corpus <- corpus(data , text_field = "text")
+
+# Tokenization
+tweet_tokens <- tokens(tweet_corpus ,  remove_symbols = TRUE, split_hyphens = TRUE, remove_numbers = TRUE ,include_docvars = TRUE)
+
+# DFM
+tweet_dfm <- dfm(tweet_tokens , tolower = TRUE)
+
+# Worterbuch
+dict_topics <- dictionary(list(blick = c("kunden", "sbb", "masken", "maskenpflicht", "massnahmen", "tragen"),
+                               srf = c("wirtschaft", "geld", "krise", "kurzarbeit", "firmen", "unternehmen", "co2",
+                                       "wachstum", "branchen"),
+                               tagi = c("spitäler", "personal", "krise", "anteil", "zürcher", "zeiten", "genügend")))
+
+
+# Anwendung Wörterbuch
+dfm_topics <- dfm_lookup(tweet_dfm , dict_topics , nomatch = "nomatch")
+
+# Berechnung Häufigkeiten pro Tag
+features_dfm_topics <- textstat_frequency(dfm_topics, 
+                                          group = "date")
+
+# Output für Visualisierung vorbereiten
+data_ggplot <- features_dfm_topics %>%
+  group_by(group) %>%
+  mutate(doctot = sum(docfreq)) %>%
+  mutate(pcent = 100 * docfreq/doctot) %>%
+  mutate(date = as.Date(group , format="%Y-%m-%d")) %>%
+  ungroup ()
+  
+
+# Plot trend over time
+n_tweets <- ndoc(tweet_corpus)
+n_users <- length(unique(data$screen_name))
+
+p4 <- ggplot(data = subset(data_ggplot , feature != "nomatch")) +
+  aes(x = group , y = pcent , group = feature , color = feature) +
+  geom_line() +
+  scale_color_discrete(name = "", labels = c("Masenpflicht","Wirtschaft","Health System")) +
+labs(title = "Number of Tweets per Topic", subtitle = paste(n_tweets , "Tweets ,", n_users , "Users"), x = "", y = "Prozent") +
+  theme_light () +
+  theme(legend.title = element_blank (),
+        legend.position = c(0.3, 0.85),
+        plot.caption = element_text(hjust = 0),
+        axis.text = element_text(size = 11, angle = 90))
+
+# Topics in SRF over time
+# Corpus bauen
+srf_corpus <- corpus(srf , text_field = "article")
+
+# Tokenization
+srf_tokens <- tokens(srf_corpus ,  remove_symbols = TRUE, split_hyphens = TRUE, remove_numbers = TRUE ,include_docvars = TRUE)
+
+# DFM
+srf_dfm <- dfm(srf_tokens , tolower = TRUE)
+
+# Anwendung Wörterbuch
+srf_topics <- dfm_lookup(srf_dfm , dict_topics , nomatch = "nomatch")
+
+# Berechnung Häufigkeiten pro Tag
+srf_dfm_topics <- textstat_frequency(srf_topics, 
+                                          group = "date")
+
+# Output für Visualisierung vorbereiten
+data_ggplot_srf <- srf_dfm_topics %>%
+  group_by(group) %>%
+  mutate(doctot = sum(docfreq)) %>%
+  mutate(pcent = 100 * docfreq/doctot) %>%
+  mutate(date = as.Date(group , format="%Y-%m-%d")) %>%
+  filter(feature == "srf") %>% 
+  filter(date < "2020-06-03") %>% 
+  ungroup ()
+  
+# merge with twitter data
+twitter_srf <- data_ggplot %>% 
+  filter(feature == "srf") %>%
+  mutate(feature = "Twitter")
+
+srf_merged <- rbind(data_ggplot_srf, twitter_srf)
+
+# Plot trend over time
+p1 <- ggplot(data = srf_merged) +
+  aes(x = group , y = pcent , group = feature , color = feature) +
+  geom_line() +
+  scale_color_discrete(name = "", labels = c("SRF","Twitter")) +
+labs(title = "Figure 3: Topic Trend SRF (Economic Impact)") +
+  theme_light () +
+  xlab("Date") +
+  ylab("Percent of Tweets/Articles") +
+  theme(legend.title = element_blank (),
+        legend.position = c(0.3, 0.85),
+        plot.caption = element_text(hjust = 0),
+        axis.text = element_text(size = 11, angle = 90))
+
+# Topics in Blick over time
+# Corpus bauen
+blick_corpus <- corpus(blick , text_field = "article")
+
+# Tokenization
+blick_tokens <- tokens(blick_corpus ,  remove_symbols = TRUE, split_hyphens = TRUE, remove_numbers = TRUE ,include_docvars = TRUE)
+
+# DFM
+blick_dfm <- dfm(blick_tokens , tolower = TRUE)
+
+# Anwendung Wörterbuch
+blick_topics <- dfm_lookup(blick_dfm , dict_topics , nomatch = "nomatch")
+
+# Berechnung Häufigkeiten pro Tag
+blick_dfm_topics <- textstat_frequency(blick_topics, 
+                                          group = "date")
+
+# Output für Visualisierung vorbereiten
+data_ggplot_blick <- blick_dfm_topics %>%
+  group_by(group) %>%
+  mutate(doctot = sum(docfreq)) %>%
+  mutate(pcent = 100 * docfreq/doctot) %>%
+  mutate(date = as.Date(group , format="%Y-%m-%d")) %>%
+  filter(feature == "blick") %>% 
+  filter(date < "2020-06-03") %>% 
+  ungroup ()
+  
+# merge with twitter data
+twitter_blick <- data_ggplot %>% 
+  filter(feature == "blick") %>%
+  mutate(feature = "Twitter")
+
+blick_merged <- rbind(data_ggplot_blick, twitter_blick)
+
+# Plot trend over time
+p2 <- ggplot(data = blick_merged) +
+  aes(x = group , y = pcent , group = feature , color = feature) +
+  geom_line() +
+  scale_color_discrete(name = "", labels = c("Blick","Twitter")) +
+labs(title = "Figure 2: Topic Trend Blick (Masks & Measures)") +
+  theme_light () +
+  xlab("Date") +
+  ylab("Percent of Tweets/Articles") +
+  theme(legend.title = element_blank (),
+        legend.position = c(0.3, 0.85),
+        plot.caption = element_text(hjust = 0),
+        axis.text = element_text(size = 11, angle = 90))
+
+# Topics in Blick over time
+# Corpus bauen
+tagi_corpus <- corpus(tagi , text_field = "article")
+
+# Tokenization
+tagi_tokens <- tokens(tagi_corpus ,  remove_symbols = TRUE, split_hyphens = TRUE, remove_numbers = TRUE ,include_docvars = TRUE)
+
+# DFM
+tagi_dfm <- dfm(tagi_tokens , tolower = TRUE)
+
+# Anwendung Wörterbuch
+tagi_topics <- dfm_lookup(tagi_dfm , dict_topics , nomatch = "nomatch")
+
+# Berechnung Häufigkeiten pro Tag
+tagi_dfm_topics <- textstat_frequency(tagi_topics, 
+                                          group = "date")
+
+# Output für Visualisierung vorbereiten
+data_ggplot_tagi <- tagi_dfm_topics %>%
+  group_by(group) %>%
+  mutate(doctot = sum(docfreq)) %>%
+  mutate(pcent = 100 * docfreq/doctot) %>%
+  mutate(date = as.Date(group , format="%Y-%m-%d")) %>%
+  filter(feature == "tagi") %>%
+  filter(date < "2020-06-03") %>% 
+  ungroup ()
+  
+# merge with twitter data
+twitter_tagi <- data_ggplot %>% 
+  filter(feature == "tagi") %>%
+  mutate(feature = "Twitter")
+
+tagi_merged <- rbind(data_ggplot_tagi, twitter_tagi)
+
+# Plot trend over time
+p3 <- ggplot(data = tagi_merged) +
+  aes(x = group , y = pcent , group = feature , color = feature) +
+  geom_line() +
+  scale_color_discrete(name = "", labels = c("Tagesanzeiger","Twitter")) +
+labs(title = "Figure 4: Topic Trend Tagesanzeiger (Contact Tracing and Infection Progression)") +
+  theme_light () +
+  xlab("Date") +
+  ylab("Percent of Tweets/Articles") +
+  theme(legend.title = element_blank (),
+        legend.position = c(0.3, 0.85),
+        plot.caption = element_text(hjust = 0),
+        axis.text = element_text(size = 11, angle = 90))
+
+
+png(file="srf_plot.png",
+width=600, height=350)
+p1
+dev.off()
+
+png(file="blick_plot.png",
+width=600, height=350)
+p2
+dev.off()
+
+png(file="tagi_plot.png",
+width=600, height=350)
+p3
+dev.off()
+
+png(file="tweets_plot.png",
+width=600, height=350)
+p4
+dev.off()
+```
+
+
+To be able to confirm the study's hypothesis, one would need to observe that peaks in the public discussion, would come after peaks in the media,  since this would indicate that after a topic experienced increased attention by the media, it then experienced increased discussion within the public sphere. Figures 2 to 4 show the resulting time trends of the main topics for each of the news agencies, as well as the corresponding trend of the topic, found within the tweets.
+
+The most noticeable finding is that of all three plots, the *SRF* topic on the economic impact of the COVID-19 crisis, seemed to be the most discussed topic on twitter, repeatedly making up over 10 percent of all tweets, while *Blick's* topic on masks and measures is the least discussed topic.
+
+Before focusing on the peak distribution, I will first address an important piece of information that will need to be considered, while visually analyzing the plots. When looking at the peak distribution of the media and the tweets, one has to keep in mind that when articles are released, it takes some time before the public acknowledges them. Thus, we should not expect to see peaks in tweets, at the time or soon after an article is released. Thus, while some Twitter peaks in the plots might seem like they coincide with the peaks in the media trend, they might in truth be the consequence of previous articles.
+
+Turning back to the analysis of the figures and keeping the information mentioned above in mind, we see that for the *SRF* and *Tagesanzeiger* figures, the media peaks seem to be mostly followed by the Twitter peaks. Thus, confirming the hypothesis. 
+
+However, when analyzing the trend distribution of the *Blick* articles, we cannot discern an evident interdependence between the media's and the tweet's peak distribution. This difficulty in discerning a trend for the the Blick articles might be due to the fact that Blick, compared to the other news sources, was the least influential media source on Twitter. Thus, it's agenda-setting power can also be expected to be considerably lower.
+
+
+```{r out.width="100%"}
+# show plots
+knitr::include_graphics('srf_plot.png', auto_pdf = T)
+knitr::include_graphics('blick_plot.png')
+knitr::include_graphics('tagi_plot.png')
+```
+
+# Conclusion
+This study set out to find an answer to the question of whether the media can influence the public discussion by choosing to focus on specific topics of an issue. The study used data on 1585 tweets from Swiss twitter users, as well as 1427 articles from the three most influential Swiss news agencies, to analyze the topic distributions within tweets and articles. In conclusion, the study found that two out of the three news agencies had a significant effect on the public discussion. In particular, through the *SRF's* focus on the topic of the economic impact of the COVID-19 crisis and the *Tagesanzeiger's* focus on *contact tracing and infection progress*, the public discourse on these topics considerably increased, after the release of numerous articles reporting on these issues. Only for *Blick's* topic on masks and measures, there seemed to be no clear connection between the amount of reporting and the levels of public discourse on the topic.
+Overall, however, the study managed to find evidence of first-level agenda-setting by the Swiss media, during the COVID-19 crisis.
+
+
+## Limitation
+The main shortcoming of the study is that the study only looked at three media agencies. While SRF, Tagesanzeiger and Blick represent the most influential news sources on Twitter, they only represent a small portion of the Swiss media landscape. As such, it might be interesting to create a topic model for the broader Swiss media landscape, to explore the agenda-setting effect of Swiss media as a whole.
+
+Furthermore, the final sample size of Swiss Twitter users was relatively small, due to having to filter out many users that either, did not reside in Switzerland or where the country of residence could not be determined. This problem was mainly caused by the fact that I had to use geolocation as the primary tool to find Swiss Twitter users. Because of this, many users that reside in countries bordering Switzerland were also included. Subsequent studies should, therefore, try to use other methods, to identify the pertinent Twitter users more reliably.
+
+Lastly, the study only relied on a very rudimentary form of analysis. Analysis through visual interpretation might be able to show us the greater trends; however, we are not able to identify causation. Thus, while the study concluded that we could observe specific trends that indicate that the media affects the public discussion, we cannot exclude that other sources of influence caused these trends. During the COVID-19 crisis, much of the information delivered to the public did not primarily come through news agencies, but through direct press releases by the Swiss government. Thus, subsequent studies should aim at a more in-depth analysis of the causality of the media's agenda-setting power and control for potential confounders.
+
+# References
+Bowe, B. J., Fahmy, S., & Wanta, W. (2013). Missing religion: Second level agenda setting and Islam in American newspapers. International Communication Gazette, 75(7), 636–652. https://doi.org/10.1177/1748048513482544
+
+Coleman, R., & Wu, H. D. (2010). Proposing Emotion as a Dimension of Affective Agenda Setting: Separating Affect into Two Components and Comparing Their Second-Level Effects. Journalism & Mass Communication Quarterly, 87(2), 315–327. https://doi.org/10.1177/107769901008700206
+
+Hester, J. B., & Gibson, R. (2003). The Economy and Second-Level Agenda Setting: A Time-Series Analysis of Economic News and Public Opinion about the Economy. Journalism & Mass Communication Quarterly, 80(1), 73–90. https://doi.org/10.1177/107769900308000106
+
+Jurkowitz, M., & Mitchell, A. (2020, April 1). Cable TV and Coronavirus: How Americans perceive the outbreak and view media coverage differ by main news source. Pew Research Center’s Journalism Project. https://www.journalism.org/2020/04/01/cable-tv-and-covid-19-how-americans-perceive-the-outbreak-and-view-media-coverage-differ-by-main-news-source/
+
+King, G., Schneer, B., & White, A. (2017). How the news media activate public expression and influence national agendas. Science, 358(6364), 776–780. https://doi.org/10.1126/science.aao1100
+
+Kowalewski, J., & McCombs, M. (2019). Measuring public opinion formation: Assessing first- and second-level agenda setting through salience measures. The Agenda Setting Journal, 3(1), 43–62. https://doi.org/10.1075/asj.18012.kow
+
+McCombes, M., Lopez-Escobar, E., & Llamas, J. P. (2000). Setting the Agenda of Attributes in the 1996 Spanish General Election. Journal of Communication, 50(2), 77–92. https://doi.org/10.1111/j.1460-2466.2000.tb02842.x
+
+McCombs, M. E., & Guo, L. (2014). Agenda-setting influence of the media in the public sphere. The Handbook of Media and Mass Communication Theory, 251–268.
+
+McCombs, M. E., & Shaw, D. L. (1972). THE AGENDA-SETTING FUNCTION OF MASS MEDIA. Public Opinion Quarterly, 36(2), 176–187. https://doi.org/10.1086/267990
+
+McCombs, M. E., Shaw, D. L., & Weaver, D. H. (2014). New Directions in Agenda-Setting Theory and Research. Mass Communication and Society, 17(6), 781–802. https://doi.org/10.1080/15205436.2014.964871
+
+McCombs, M., Llamas, J. P., Lopez-Escobar, E., & Rey, F. (1997). Candidate Images in Spanish Elections: Second-Level Agenda-Setting Effects. Journalism & Mass Communication Quarterly, 74(4), 703–717. https://doi.org/10.1177/107769909707400404
+
+Smith, D. (2020, April 11). Trump and Fox News: The dangerous relationship shaping America’s coronavirus response. The Guardian. https://www.theguardian.com/media/2020/apr/10/fox-news-donald-trump-coronavirus
+
+Tan, Y., & Weaver, D. H. (2009). Local Media, Public Opinion, and State Legislative Policies: Agenda Setting at the State Level. The International Journal of Press/Politics, 14(4), 454–476. https://doi.org/10.1177/1940161209336225
+
+Wanta, W., Golan, G., & Lee, C. (2004). Agenda Setting and International News: Media Influence on Public Perceptions of Foreign Nations. Journalism & Mass Communication Quarterly, 81(2), 364–377. https://doi.org/10.1177/107769900408100209
+
+Weaver, D. H. (2015). Agenda-Setting Effects. In The International Encyclopedia of Communication. American Cancer Society. https://doi.org/10.1002/9781405186407.wbieca036.pub2
+
+Wirth, W., Matthes, J., Schemer, C., Wettstein, M., Friemel, T., Hänggli, R., & Siegert, G. (2010). Agenda Building and Setting in a Referendum Campaign: Investigating the Flow of Arguments among Campaigners, the Media, and the Public. Journalism & Mass Communication Quarterly, 87(2), 328–345. https://doi.org/10.1177/107769901008700207
+
+# Appendix
+
+```{r out.width = '100%'}
+knitr::include_graphics('searchk_blick.png')
+knitr::include_graphics('searchk_srf.png')
+knitr::include_graphics('searchk_tagi.png')
+```
+
+
+```{r out.width= "100%"}
+knitr::include_graphics('blick_stm_plot.png')
+knitr::include_graphics('srf_stm_plot.png')
+knitr::include_graphics('tagi_stm_plot.png')
+```
